@@ -1,0 +1,41 @@
+{
+  "name": "vecode/caldera-router",
+  "description": "Routing component with controllers and route groups, part of Vecode Caldera",
+  "version": "1.0",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "biohzrdmx",
+      "email": "hi@biohzrdmx.me",
+      "homepage": "https://biohzrdmx.me"
+    }
+  ],
+  "require": {
+    "php": ">=8.1",
+    "ext-mbstring": "*",
+    "psr/container": "^2.0",
+    "psr/http-message": "^1.0",
+    "psr/http-factory": "^1.0"
+  },
+  "require-dev": {
+    "vecode/caldera-container": "^1.0",
+    "nyholm/psr7": "^1.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "Caldera\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Caldera\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "analyse": "phpstan analyse --configuration phpstan.neon --memory-limit 1G --level 7 src",
+    "coverage": "phpunit --coverage-text",
+    "test": "phpunit --testdox"
+  },
+  "minimum-stability": "stable"
+}
