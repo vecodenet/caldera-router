@@ -281,7 +281,7 @@ class Router {
 		if (! $ret ) {
 			throw new RuntimeException("Unknown route '{$name}'");
 		}
-		return is_string($ret) ? implode('/', [trim($this->directory, '/'), trim($ret, '/')]) : '';
+		return is_string($ret) ? trim($ret, '/') : '';
 	}
 
 	/**
