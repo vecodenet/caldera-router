@@ -1,7 +1,7 @@
 {
   "name": "vecode/caldera-router",
   "description": "Routing component with controllers and route groups, part of Vecode Caldera",
-  "version": "1.1",
+  "version": "1.2",
   "type": "library",
   "license": "MIT",
   "authors": [

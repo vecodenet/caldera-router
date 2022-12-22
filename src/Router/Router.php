@@ -23,6 +23,7 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+use Caldera\Router\CompiledRoute;
 use Caldera\Router\Group;
 use Caldera\Router\HasGroups;
 use Caldera\Router\HasRoutes;
@@ -68,6 +69,12 @@ class Router {
 	 * @var string
 	 */
 	protected $directory = '';
+
+	/**
+	 * Current route
+	 * @var CompiledRoute
+	 */
+	protected $current;
 
 	/**
 	 * Constructor
@@ -116,6 +123,14 @@ class Router {
 	}
 
 	/**
+	 * Get the current route
+	 * @return CompiledRoute
+	 */
+	public function getCurrentRoute(): ?CompiledRoute {
+		return $this->current;
+	}
+
+	/**
 	 * Dispatch the request
 	 * @param  ServerRequestInterface   $request Request object
 	 * @return ResponseInterface
@@ -152,6 +167,7 @@ class Router {
 			}
 		}
 		if ($compiled) {
+			$this->current = $compiled;
 			$route = $compiled->getRoute();
 			$handler = $route->getHandler();
 			$callable = null;

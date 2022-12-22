@@ -342,6 +342,8 @@ class RouterTest extends TestCase {
 		$request = $request_factory->createServerRequest('POST', 'http://localhost/some/directory/structure/users/delete/625');
 		$response = $router->dispatch($request);
 		$this->assertEquals('USERS.DELETE:625', (string) $response->getBody());
+		$current = $router->getCurrentRoute();
+		$this->assertEquals('test.users.delete', (string) $current);
 	}
 
 	public function testDispatchNestedGroupWithController() {
@@ -398,13 +400,13 @@ class RouterTest extends TestCase {
 		})->setName('admin');
 		# Start with the simple ones
 		$route = $router->route('index');
-		$this->assertEquals('/index', $route);
+		$this->assertEquals('index', $route);
 		$route = $router->route('about');
-		$this->assertEquals('/about', $route);
+		$this->assertEquals('about', $route);
 		$route = $router->route('admin.users.index');
-		$this->assertEquals('/admin/users', $route);
+		$this->assertEquals('admin/users', $route);
 		$route = $router->route('admin.users.new');
-		$this->assertEquals('/admin/users/new', $route);
+		$this->assertEquals('admin/users/new', $route);
 		# With non-existing route
 		try {
 			$route = $router->route('foo.bar.baz');
@@ -420,11 +422,11 @@ class RouterTest extends TestCase {
 			$this->assertInstanceOf(RuntimeException::class, $e);
 		}
 		$route = $router->route('admin.users.new', ['ref' => 123]);
-		$this->assertEquals('/admin/users/new?ref=123', $route);
+		$this->assertEquals('admin/users/new?ref=123', $route);
 		$route = $router->route('admin.users.edit', ['id' => 123]);
-		$this->assertEquals('/admin/users/edit/123', $route);
+		$this->assertEquals('admin/users/edit/123', $route);
 		$route = $router->route('admin.users.delete', ['id' => 456]);
-		$this->assertEquals('/admin/users/delete/456', $route);
+		$this->assertEquals('admin/users/delete/456', $route);
 	}
 }
 

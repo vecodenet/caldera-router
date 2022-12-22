@@ -11,9 +11,11 @@ declare(strict_types = 1);
 
 namespace Caldera\Router;
 
+use Stringable;
+
 use Caldera\Router\Route;
 
-class CompiledRoute {
+class CompiledRoute implements Stringable {
 
 	/**
 	 * Route object
@@ -103,5 +105,15 @@ class CompiledRoute {
 	 */
 	public function getParameter(string $parameter, string $default = ''): string {
 		return $this->parameters[$parameter] ?? $default;
+	}
+
+	/**
+	 * Convert to string
+	 * @return string
+	 */
+	public function __toString(): string {
+		$name = $this->route !== null ? $this->route->getName() : '';
+		$name = $name ? $name : sprintf('route_%s', spl_object_id($this));
+		return $name;
 	}
 }
