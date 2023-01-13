@@ -132,10 +132,11 @@ class Router {
 
 	/**
 	 * Dispatch the request
-	 * @param  ServerRequestInterface   $request Request object
+	 * @param  ServerRequestInterface   $request  Request object
+	 * @param  Closure                  $callback Callback closure
 	 * @return ResponseInterface
 	 */
-	public function dispatch(ServerRequestInterface $request): ResponseInterface {
+	public function dispatch(ServerRequestInterface $request, Closure $callback = null): ResponseInterface {
 		# Parse the request URI and get the requested resource
 		$directory = trim($this->directory, '/');
 		$uri = $request->getUri();
@@ -197,52 +198,16 @@ class Router {
 			if ( is_callable($callable) ) {
 				# Create a default response
 				$response = $this->factory->createResponse(200);
-				# Call route handler
-				$callable_args = [];
-				if ($arguments) {
-					foreach ($arguments as $argument) {
-						switch ( $argument->getName() ) {
-							case 'request':
-								# Use the Request instance
-								$callable_args[] = $request;
-							break;
-							case 'response':
-								# Use the Response instance
-								$callable_args[] = $response;
-							break;
-							default:
-								# Check if the parameter is on the URI
-								$val = $params[ $argument->name ] ?? null;
-								if ( $val !== null ) {
-									# It is present, use it
-									$callable_args[] = $val;
-								} else {
-									# Not in the URI, try with a default value maybe?
-									if ( $argument->isDefaultValueAvailable() ) {
-										# Default value available, use it
-										$callable_args[] = $argument->getDefaultValue();
-									} else {
-										# No default value, try to resolve it from the container
-										$type = $argument->getType();
-										try {
-											# This may raise an exception
-											$dependency = new ReflectionClass( $type->getName() ); # @phpstan-ignore-line
-											$callable_args[] = $this->container->get( $dependency->name );
-										} catch (Exception $e) {
-											throw new RuntimeException("Can not resolve parameter '{$argument->name}'");
-										}
-									}
-								}
-							break;
-						}
-					}
+				# Check if there is a callback
+				if ($callback) {
+					# If a callback is set, call it back!
+					return $callback($request, function(ServerRequestInterface $request) use ($response, $callable, $arguments, $params) {
+						return $this->executeHandler($callable, $arguments, $params, $request, $response);
+					});
+				} else {
+					# No callback, just call the handler
+					return $this->executeHandler($callable, $arguments, $params, $request, $response);
 				}
-				# Call route handler
-				$ret = call_user_func_array($callable, $callable_args);
-				if ($ret instanceof ResponseInterface) {
-					$response = $ret;
-				}
-				return $response;
 			}
 		}
 		# If we got to here then the request hasn't been handled
@@ -404,5 +369,64 @@ class Router {
 			return call_user_func('trim', $part, $separator);
 		}, $parts);
 		return implode($separator, $parts);
+	}
+
+	/**
+	 * Execute route handler
+	 * @param  callable               $callable   Callable function
+	 * @param  array                  $arguments  Callable arguments array
+	 * @param  array                  $parameters URI parameters array
+	 * @param  ServerRequestInterface $request    ServerRequestInterface implementation
+	 * @param  ResponseInterface      $response   ResponseInterface implementation
+	 * @return ResponseInterface
+	 */
+	protected function executeHandler($callable, array $arguments, array $parameters, ServerRequestInterface $request, ResponseInterface $response): ResponseInterface {
+		# Resolve the callable arguments
+		$callable_args = [];
+		if ($arguments) {
+			foreach ($arguments as $argument) {
+				switch ( $argument->getName() ) {
+					case 'request':
+						# Use the Request instance
+						$callable_args[] = $request;
+					break;
+					case 'response':
+						# Use the Response instance
+						$callable_args[] = $response;
+					break;
+					default:
+						# Check if the parameter is on the URI
+						$val = $parameters[ $argument->name ] ?? null;
+						if ( $val !== null ) {
+							# It is present, use it
+							$callable_args[] = $val;
+						} else {
+							# Not in the URI, try with a default value maybe?
+							if ( $argument->isDefaultValueAvailable() ) {
+								# Default value available, use it
+								$callable_args[] = $argument->getDefaultValue();
+							} else {
+								# No default value, try to resolve it from the container
+								$type = $argument->getType();
+								try {
+									# This may raise an exception
+									$dependency = new ReflectionClass( $type->getName() ); # @phpstan-ignore-line
+									$callable_args[] = $this->container->get( $dependency->name );
+								} catch (Exception $e) {
+									throw new RuntimeException("Can not resolve parameter '{$argument->name}'");
+								}
+							}
+						}
+					break;
+				}
+			}
+		}
+		# And execute the callable
+		$ret = call_user_func_array($callable, $callable_args);
+		# If the is a response we should use that
+		if ($ret instanceof ResponseInterface) {
+			$response = $ret;
+		}
+		return $response;
 	}
 }
